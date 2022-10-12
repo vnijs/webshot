@@ -2,7 +2,9 @@ phantom_run <- function(args, wait = TRUE, quiet = FALSE) {
   phantom_bin <- find_phantom(quiet = quiet)
 
   # Handle missing phantomjs
-  if (is.null(phantom_bin)) return(NULL)
+  if (is.null(phantom_bin)) {
+    return(NULL)
+  }
 
   # Make sure args is a char vector
   args <- as.character(args)
@@ -23,7 +25,7 @@ phantom_run <- function(args, wait = TRUE, quiet = FALSE) {
         cat(txt, sep = "\n")
       }
     }
-    while(p$is_alive()) {
+    while (p$is_alive()) {
       p$wait(200) # wait until min(c(time_ms, process ends))
       cat_n(p$read_error_lines())
       cat_n(p$read_output_lines())
@@ -35,8 +37,10 @@ phantom_run <- function(args, wait = TRUE, quiet = FALSE) {
 
 # Find PhantomJS from PATH, APPDATA, system.file('webshot'), ~/bin, etc
 find_phantom <- function(quiet = FALSE) {
-  path <- Sys.which( "phantomjs" )
-  if (path != "") return(path)
+  path <- Sys.which("phantomjs")
+  if (path != "") {
+    return(path)
+  }
 
   for (d in phantom_paths()) {
     exec <- if (is_windows()) "phantomjs.exe" else "phantomjs"
@@ -51,7 +55,7 @@ find_phantom <- function(quiet = FALSE) {
     # packages which use webshot in their R CMD check (in examples or vignettes)
     # will get an ERROR. We'll issue a message and return NULL; other
 
-    if(!quiet) {
+    if (!quiet) {
       message(
         "PhantomJS not found. You can install it with webshot::install_phantomjs(). ",
         "If it is installed, please make sure the phantomjs executable ",
@@ -66,7 +70,8 @@ find_phantom <- function(quiet = FALSE) {
 phantomjs_cmd_result <- function(args, wait = TRUE, quiet = FALSE) {
   # Retrieve and store output from STDOUT
   utils::capture.output(invisible(phantom_run(args = args, wait = wait, quiet = quiet)),
-                        type = "output")
+    type = "output"
+  )
 }
 
 phantomjs_version <- function() {
@@ -104,7 +109,7 @@ is_phantomjs_version_latest <- function(requested_version) {
   # For simplicity, we'll just remove the "-development" or "-beta" or "-beta2"
   # so they all map to "2.5.0".
   installed_phantomjs_version <- sub("-development", "", installed_phantomjs_version)
-  requested_version           <- sub("-beta.*",      "", requested_version)
+  requested_version <- sub("-beta.*", "", requested_version)
 
   # Check if the installed version is latest compared to requested version.
   as.package_version(installed_phantomjs_version) >= requested_version
@@ -147,46 +152,48 @@ is_phantomjs_version_latest <- function(requested_version) {
 #'   the version of PhantomJS.
 #' @return \code{NULL} (the executable is written to a system directory).
 #' @export
-install_phantomjs <- function(version = '2.1.1',
-    baseURL = 'https://github.com/wch/webshot/releases/download/v0.3.1/',
-    force = FALSE) {
-
+install_phantomjs <- function(version = "2.1.1",
+                              baseURL = "https://github.com/wch/webshot/releases/download/v0.3.1/",
+                              force = FALSE) {
   if (!force && is_phantomjs_version_latest(version)) {
-      message('It seems that the version of `phantomjs` installed is ',
-              'greater than or equal to the requested version.',
-              'To install the requested version or downgrade to another version, ',
-              'use `force = TRUE`.')
-      return(invisible())
+    message(
+      "It seems that the version of `phantomjs` installed is ",
+      "greater than or equal to the requested version.",
+      "To install the requested version or downgrade to another version, ",
+      "use `force = TRUE`."
+    )
+    return(invisible())
   }
 
-  if (!grepl("/$", baseURL))
+  if (!grepl("/$", baseURL)) {
     baseURL <- paste0(baseURL, "/")
+  }
 
   owd <- setwd(tempdir())
   on.exit(setwd(owd), add = TRUE)
   if (is_windows()) {
-    zipfile <- sprintf('phantomjs-%s-windows.zip', version)
-    download(paste0(baseURL, zipfile), zipfile, mode = 'wb')
+    zipfile <- sprintf("phantomjs-%s-windows.zip", version)
+    download(paste0(baseURL, zipfile), zipfile, mode = "wb")
     utils::unzip(zipfile)
-    zipdir <- sub('.zip$', '', zipfile)
-    exec <- file.path(zipdir, 'bin', 'phantomjs.exe')
+    zipdir <- sub(".zip$", "", zipfile)
+    exec <- file.path(zipdir, "bin", "phantomjs.exe")
   } else if (is_osx()) {
-    zipfile <- sprintf('phantomjs-%s-macosx.zip', version)
-    download(paste0(baseURL, zipfile), zipfile, mode = 'wb')
+    zipfile <- sprintf("phantomjs-%s-macosx.zip", version)
+    download(paste0(baseURL, zipfile), zipfile, mode = "wb")
     utils::unzip(zipfile)
-    zipdir <- sub('.zip$', '', zipfile)
-    exec <- file.path(zipdir, 'bin', 'phantomjs')
-    Sys.chmod(exec, '0755')  # chmod +x
+    zipdir <- sub(".zip$", "", zipfile)
+    exec <- file.path(zipdir, "bin", "phantomjs")
+    Sys.chmod(exec, "0755") # chmod +x
   } else if (is_linux()) {
     zipfile <- sprintf(
-      'phantomjs-%s-linux-%s.tar.bz2', version,
-      if (grepl('64', Sys.info()[['machine']])) 'x86_64' else 'i686'
+      "phantomjs-%s-linux-%s.tar.bz2", version,
+      if (grepl("64", Sys.info()[["machine"]])) "x86_64" else "i686"
     )
-    download(paste0(baseURL, zipfile), zipfile, mode = 'wb')
+    download(paste0(baseURL, zipfile), zipfile, mode = "wb")
     utils::untar(zipfile)
-    zipdir <- sub('.tar.bz2$', '', zipfile)
-    exec <- file.path(zipdir, 'bin', 'phantomjs')
-    Sys.chmod(exec, '0755')  # chmod +x
+    zipdir <- sub(".tar.bz2$", "", zipfile)
+    exec <- file.path(zipdir, "bin", "phantomjs")
+    Sys.chmod(exec, "0755") # chmod +x
   } else {
     # Unsupported platform, like Solaris
     message("Sorry, this platform is not supported.")
@@ -200,44 +207,48 @@ install_phantomjs <- function(version = '2.1.1',
     if (success) break
   }
   unlink(c(zipdir, zipfile), recursive = TRUE)
-  if (!success) stop(
-    'Unable to install PhantomJS to any of these dirs: ',
-    paste(dirs, collapse = ', ')
-  )
-  message('phantomjs has been installed to ', normalizePath(destdir))
+  if (!success) {
+    stop(
+      "Unable to install PhantomJS to any of these dirs: ",
+      paste(dirs, collapse = ", ")
+    )
+  }
+  message("phantomjs has been installed to ", normalizePath(destdir))
   invisible()
 }
 
 # Possible locations of the PhantomJS executable
 phantom_paths <- function() {
   if (is_windows()) {
-    path <- Sys.getenv('APPDATA', '')
-    path <- if (dir_exists(path)) file.path(path, 'PhantomJS')
+    path <- Sys.getenv("APPDATA", "")
+    path <- if (dir_exists(path)) file.path(path, "PhantomJS")
   } else if (is_osx()) {
-    path <- '~/Library/Application Support'
-    path <- if (dir_exists(path)) file.path(path, 'PhantomJS')
+    path <- "~/Library/Application Support"
+    path <- if (dir_exists(path)) file.path(path, "PhantomJS")
   } else {
-    path <- '~/bin'
+    path <- "/usr/local/bin"
   }
-  path <- c(path, file.path(system.file(package = 'webshot'), 'PhantomJS'))
+  path <- c(path, file.path(system.file(package = "webshot"), "PhantomJS"))
   path
 }
 
-dir_exists <- function(path) utils::file_test('-d', path)
+dir_exists <- function(path) utils::file_test("-d", path)
 
 # Given a vector or list, drop all the NULL items in it
 dropNulls <- function(x) {
-  x[!vapply(x, is.null, FUN.VALUE=logical(1))]
+  x[!vapply(x, is.null, FUN.VALUE = logical(1))]
 }
 
 is_windows <- function() .Platform$OS.type == "windows"
-is_osx     <- function() Sys.info()[['sysname']] == 'Darwin'
-is_linux   <- function() Sys.info()[['sysname']] == 'Linux'
-is_solaris <- function() Sys.info()[['sysname']] == 'SunOS'
+is_osx <- function() Sys.info()[["sysname"]] == "Darwin"
+is_linux <- function() Sys.info()[["sysname"]] == "Linux"
+is_solaris <- function() Sys.info()[["sysname"]] == "SunOS"
 
 # Find an available TCP port (to launch Shiny apps)
 available_port <- function(port = NULL, min = 3000, max = 9000) {
-  if (!is.null(port)) return(port)
+  if (!is.null(port)) {
+    return(port)
+  }
 
   # Unsafe port list from shiny::runApp()
   valid_ports <- setdiff(min:max, c(3659, 4045, 6000, 6665:6669, 6697))
@@ -268,16 +279,16 @@ available_port <- function(port = NULL, min = 3000, max = 9000) {
 # 403 for HEAD requests. See
 # https://stat.ethz.ch/pipermail/r-devel/2016-June/072852.html
 download <- function(url, destfile, mode = "w") {
-  if (getRversion() >= "3.3.0") {
-    download_no_libcurl(url, destfile, mode = mode)
+  # if (getRversion() >= "3.3.0") {
+  #   download_no_libcurl(url, destfile, mode = mode)
 
-  } else if (is_windows() && getRversion() < "3.2") {
-    # Older versions of R on Windows need setInternet2 to download https.
-    download_old_win(url, destfile, mode = mode)
+  # } else if (is_windows() && getRversion() < "3.2") {
+  #   # Older versions of R on Windows need setInternet2 to download https.
+  #   download_old_win(url, destfile, mode = mode)
 
-  } else {
-    utils::download.file(url, destfile, mode = mode)
-  }
+  # } else {
+  utils::download.file(url, destfile, mode = mode)
+  # }
 }
 
 
@@ -287,7 +298,6 @@ download_no_libcurl <- function(url, ...) {
   if (is_windows()) {
     method <- "wininet"
     utils::download.file(url, method = method, ...)
-
   } else {
     # If non-Windows, check for libcurl/curl/wget/lynx, then call download.file with
     # appropriate method.
@@ -303,7 +313,6 @@ download_no_libcurl <- function(url, ...) {
       on.exit(options(download.file.extra = orig_extra_options))
 
       options(download.file.extra = paste("-L", orig_extra_options))
-
     } else if (nzchar(Sys.which("lynx")[1])) {
       method <- "lynx"
     } else {
@@ -318,7 +327,7 @@ download_no_libcurl <- function(url, ...) {
 # Adapted from downloader::download, for R<3.2 on Windows
 download_old_win <- function(url, ...) {
   # If we directly use setInternet2, R CMD CHECK gives a Note on Mac/Linux
-  seti2 <- `::`(utils, 'setInternet2')
+  seti2 <- `::`(utils, "setInternet2")
 
   # Check whether we are already using internet2 for internal
   internet2_start <- seti2(NA)
@@ -347,15 +356,16 @@ download_old_win <- function(url, ...) {
 # Fix local filenames like "c:/path/file.html" to "file:///c:/path/file.html"
 # because that's the format used by casperjs and the webshot.js script.
 fix_windows_url <- function(url) {
-  if (!is_windows()) return(url)
+  if (!is_windows()) {
+    return(url)
+  }
 
   fix_one <- function(x) {
     # If it's a "c:/path/file.html" path, or contains any backslashs, like
     # "c:\path", "\\path\\file.html", or "/path\\file.html", we need to fix it
     # up. However, we need to leave paths that are already URLs alone.
     if (grepl("^[a-zA-Z]:[/\\]", x) ||
-        (!grepl(":", x, fixed = TRUE) && grepl("\\", x, fixed = TRUE)))
-    {
+      (!grepl(":", x, fixed = TRUE) && grepl("\\", x, fixed = TRUE))) {
       paste0("file:///", normalizePath(x, winslash = "/"))
     } else {
       x
@@ -367,36 +377,46 @@ fix_windows_url <- function(url) {
 
 
 # Borrowed from animation package, with some adaptations.
-find_magic = function() {
+find_magic <- function() {
   # try to look for ImageMagick in the Windows Registry Hive, the Program Files
   # directory and the LyX installation
-  if (!inherits(try({
-    magick.path = utils::readRegistry('SOFTWARE\\ImageMagick\\Current')$BinPath
-  }, silent = TRUE), 'try-error')) {
+  if (!inherits(try(
+    {
+      magick.path <- utils::readRegistry("SOFTWARE\\ImageMagick\\Current")$BinPath
+    },
+    silent = TRUE
+  ), "try-error")) {
     if (nzchar(magick.path)) {
-      convert = normalizePath(file.path(magick.path, 'convert.exe'), "/", mustWork = FALSE)
+      convert <- normalizePath(file.path(magick.path, "convert.exe"), "/", mustWork = FALSE)
     }
   } else if (
-    nzchar(prog <- Sys.getenv('ProgramFiles')) &&
-      length(magick.dir <- list.files(prog, '^ImageMagick.*')) &&
-      length(magick.path <- list.files(file.path(prog, magick.dir), pattern = '^convert\\.exe$',
-                                       full.names = TRUE, recursive = TRUE))
+    nzchar(prog <- Sys.getenv("ProgramFiles")) &&
+      length(magick.dir <- list.files(prog, "^ImageMagick.*")) &&
+      length(magick.path <- list.files(file.path(prog, magick.dir),
+        pattern = "^convert\\.exe$",
+        full.names = TRUE, recursive = TRUE
+      ))
   ) {
-    convert = normalizePath(magick.path[1], "/", mustWork = FALSE)
-  } else if (!inherits(try({
-    magick.path = utils::readRegistry('LyX.Document\\Shell\\open\\command', 'HCR')
-  }, silent = TRUE), 'try-error')) {
-    convert = file.path(dirname(gsub('(^\"|\" \"%1\"$)', '', magick.path[[1]])), c('..', '../etc'),
-                        'imagemagick', 'convert.exe')
-    convert = convert[file.exists(convert)]
+    convert <- normalizePath(magick.path[1], "/", mustWork = FALSE)
+  } else if (!inherits(try(
+    {
+      magick.path <- utils::readRegistry("LyX.Document\\Shell\\open\\command", "HCR")
+    },
+    silent = TRUE
+  ), "try-error")) {
+    convert <- file.path(
+      dirname(gsub('(^\"|\" \"%1\"$)', "", magick.path[[1]])), c("..", "../etc"),
+      "imagemagick", "convert.exe"
+    )
+    convert <- convert[file.exists(convert)]
     if (length(convert)) {
-      convert = normalizePath(convert, "/", mustWork = FALSE)
+      convert <- normalizePath(convert, "/", mustWork = FALSE)
     } else {
-      warning('No way to find ImageMagick!')
+      warning("No way to find ImageMagick!")
       return("")
     }
   } else {
-    warning('ImageMagick not installed yet!')
+    warning("ImageMagick not installed yet!")
     return("")
   }
 
